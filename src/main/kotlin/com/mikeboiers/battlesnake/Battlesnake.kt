@@ -14,8 +14,8 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.io.File
 
-const val name = "Katerpillar" // put the name of your new snake here!
-const val author = "MikeBoiers" // put your name here!
+const val name = "BaKtlesnake"
+const val author = "MikeBoiers"
 
 // This is the json serializer used
 // It ignores unknown keys by default, but invalid values will not be accepted

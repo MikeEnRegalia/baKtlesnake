@@ -2,6 +2,7 @@ package com.mikeboiers.battlesnake
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.math.abs
 
 // This file contains utility for calculating positions and directions
 // You can add more logic to this file, if you want.
@@ -41,3 +42,5 @@ fun Position.adjacent() = listOf(
     this + Direction.LEFT,
     this + Direction.RIGHT
 )
+
+fun Position.distanceTo(other: Position) = abs(x - other.x) + abs(y - other.y)
