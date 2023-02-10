@@ -1,4 +1,4 @@
-package com.example.battlesnake
+package com.mikeboiers.battlesnake
 
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -14,8 +14,8 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.io.File
 
-const val name = "YourSnakeHere" // put the name of your new snake here!
-const val author = "YourNameHere" // put your name here!
+const val name = "Katerpillar" // put the name of your new snake here!
+const val author = "MikeBoiers" // put your name here!
 
 // This is the json serializer used
 // It ignores unknown keys by default, but invalid values will not be accepted
@@ -95,10 +95,12 @@ fun main() {
                 val request = call.receive<MoveRequest>()
 
                 // We will respond with whatever Logic.kt tells us!
-                call.respond(MoveResponse(
+                call.respond(
+                    MoveResponse(
                     shout = "Hello, world!",
                     move = decideMove(request)
-                ))
+                )
+                )
             }
         }
     }.start(wait = true)
