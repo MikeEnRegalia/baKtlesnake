@@ -1,6 +1,7 @@
 package com.mikeboiers.battlesnake
 
 import io.ktor.http.*
+import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -75,12 +76,12 @@ fun main() {
             // The "start game request"
             // Here, we just accept it, but you can handle this in the future
             post("/start") {
-                call.respond(HttpStatusCode.OK)
+                call.respond(OK)
             }
 
             // We will do the same for the end request
             post("/end") {
-                call.respond(HttpStatusCode.OK)
+                call.respond(OK)
             }
 
             // The "info" request
@@ -97,7 +98,7 @@ fun main() {
                 // We will respond with whatever Logic.kt tells us!
                 call.respond(
                     MoveResponse(
-                    shout = "Hello, world!",
+                    shout = "!!!",
                     move = decideMove(request)
                 )
                 )

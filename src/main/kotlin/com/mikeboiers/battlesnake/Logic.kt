@@ -1,25 +1,82 @@
 package com.mikeboiers.battlesnake
 
 import com.mikeboiers.battlesnake.Direction.DOWN
+import kotlin.Int.Companion.MAX_VALUE
+import kotlin.math.min
 
-// This is the heart of your snake
-// It defines what to do on your next move
-// You get the current game state passed as a parameter, you only have to return a direction to move into
 fun decideMove(request: MoveRequest): Direction {
     val head = request.you.head
     val body = request.you.body
     val board = request.board
+    val otherSnakes = board.snakes.filterNot { it.id == request.you.id}
 
-    // Find all "safe" moves to do
-    // (if you do a move that is not in this list, you will lose)
-    val safeMoves = enumValues<Direction>()
-        .filter { head + it !in body }
-        .filter { (head + it).x in 0 until board.width }
-        .filter { (head + it).y in 0 until board.height }
-        .filter { (head + it) !in board.snakes.flatMap(BattleSnake::body) }
-        .filter { (head + it) !in board.hazards }
-        .sortedBy { direction -> board.food.minOfOrNull { it.distanceTo(head + direction) } }
+    fun Position.outsideMe() = this !in body
+    fun Position.onBoard() = x in 0 until board.width && y in 0 until board.height
+    fun Position.notInOtherSnakes() = this !in otherSnakes.flatMap(BattleSnake::body)
+    fun Position.notInHazards() = this !in board.hazards
+    fun Position.notNearDangerousHeads() =
+        this !in otherSnakes.filter { it.body.size >= body.size }.flatMap { it.head.adjacent() }
 
+    fun Position.isNotSuicide() = outsideMe() && onBoard() && notInOtherSnakes() && notInHazards()
 
-    return safeMoves.firstOrNull() ?: DOWN
+    fun Position.realDistanceTo(target: Position): Int? {
+        var s = this
+        val v = mutableSetOf<Position>()
+        val u = mutableSetOf<Position>()
+        val d = mutableMapOf(s to 0)
+
+        while (true) {
+            s.adjacent().filter { it !in v && it.isNotSuicide() }.forEach { n ->
+                u += n
+                val distance = d.getValue(s) + 1
+                d.compute(n) { _, old -> min(distance, old ?: MAX_VALUE) }
+            }
+            v += s
+            u -= s
+            if (s == target) return d.getValue(s)
+            s = u.minByOrNull { d.getValue(it) } ?: break
+        }
+        return null
+    }
+
+    fun Position.maxDistance(): Int? {
+        var s = this
+        val v = mutableSetOf<Position>()
+        val u = mutableSetOf<Position>()
+        val d = mutableMapOf(s to 0)
+
+        while (true) {
+            s.adjacent().filter { it !in v && it.isNotSuicide() }.forEach { n ->
+                u += n
+                val distance = d.getValue(s) + 1
+                d.compute(n) { _, old -> min(distance, old ?: MAX_VALUE) }
+            }
+            v += s
+            u -= s
+            s = u.minByOrNull { d.getValue(it) } ?: break
+        }
+        return d.values.maxOrNull()
+    }
+
+    fun List<Direction>.pick() = firstOrNull { (head + it).notNearDangerousHeads() } ?: firstOrNull()
+
+    val nonSuicidalMoves = enumValues<Direction>().filter { (head + it).isNotSuicide() }
+
+    val hungry = request.you.health < 50 || body.size < otherSnakes.minOf { it.body.size }
+    if (!hungry) {
+        return nonSuicidalMoves.sortedByDescending { (head + it).maxDistance() }.pick() ?: DOWN
+    }
+
+    // prioritize food
+    val bestMove = nonSuicidalMoves
+        .map { it to board.food.minOfOrNull { food -> food.realDistanceTo(head + it) ?: MAX_VALUE } }
+        .filter { it.second != null }
+        .sortedBy { it.second!! }
+        .map { it.first }
+        .pick()
+    if (bestMove != null) return bestMove
+
+    return nonSuicidalMoves
+        .sortedBy { direction -> board.food.minOfOrNull { it.distanceTo(head + direction) } ?: MAX_VALUE }
+        .pick() ?: DOWN
 }
